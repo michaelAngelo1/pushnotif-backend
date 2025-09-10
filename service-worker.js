@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
     body: data.body || "Test Body"
   }
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(self.registration.showNotification(title, body));
 });
 
 self.addEventListener('notificationclick', (event) => {
