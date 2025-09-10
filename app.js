@@ -64,10 +64,15 @@ app.get('/', (req, res) => {
 });
 
 // Serves service-worker file
+// In app.js
+
+// Serves service-worker file
 app.get('/proxy/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
+    // ADD THIS LINE: This is the permission slip for the browser.
+    res.setHeader('Service-Worker-Allowed', '/');
     res.sendFile(path.join(__dirname, 'service-worker.js'));
-})
+});
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
