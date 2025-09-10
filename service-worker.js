@@ -14,7 +14,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('push', (event) => {
   console.log('[SW] Event: push received');
-  // A placeholder for handling push notifications.
+  
+  const data = event.data.json();
+  const title = data.title || "Test Push";
+  const body = {
+    body: data.body || "Test Body"
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
