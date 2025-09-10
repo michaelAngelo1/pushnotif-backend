@@ -4,9 +4,9 @@ const webpush = require('web-push');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const fs = require('fs'); // <-- 1. Import the File System module
 
 const app = express();
-
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -19,43 +19,29 @@ webpush.setVapidDetails(
     privateVapidKey
 );
 
-// Test push notif
-let savedSubscription = null;
+// 2. Read the service worker file into memory at startup
+const swContent = fs.readFileSync(path.join(__dirname, 'service-worker.js'), 'utf8');
 
+// ... (Your /proxy/subscribe and /send-notification routes go here) ...
+let savedSubscription = null;
 app.post('/proxy/subscribe', (req, res) => {
     savedSubscription = req.body;
     console.log("Subscription received");
-
-    res.status(201).json({
-        message: "Subscription received message"
-    })
+    res.status(201).json({ message: "Subscription received message" });
 });
-
-// Endpoint for notification
 app.post('/send-notification', (req, res) => {
-
-    if(!savedSubscription) {
-        return res.status(404).json({
-            error: "No subscription found to test"
-        })
+    if (!savedSubscription) {
+        return res.status(404).json({ error: "No subscription found to test" });
     }
-
-    const payload = JSON.stringify({
-        title: "Test Notification", 
-        body: "It works!",
-    });
-
+    const payload = JSON.stringify({ title: "Test Notification", body: "It works!" });
     webpush.sendNotification(savedSubscription, payload)
-        .then(() => {
-            res.status(201).json({
-                message: "Notification sent successfully"
-            })
-        })
+        .then(() => res.status(201).json({ message: "Notification sent successfully" }))
         .catch((err) => {
             console.log("Error sending notification");
-            res.status(500);
-        })
+            res.sendStatus(500);
+        });
 });
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -63,19 +49,15 @@ app.get('/', (req, res) => {
     res.send('Hello, this is the Push Notification Server');
 });
 
-// Serves service-worker file
-// In app.js
-
-// Serves service-worker file
+// 3. Update the route to use res.send()
 app.get('/proxy/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
-    // ADD THIS LINE: This is the permission slip for the browser.
     res.setHeader('Service-Worker-Allowed', '/');
-    res.sendFile(path.join(__dirname, 'service-worker.js'));
+    res.send(swContent); // <-- Use res.send() with the file content
 });
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
 });
 
-module.exports = app
+module.exports = app;
